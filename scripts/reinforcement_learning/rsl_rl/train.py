@@ -48,6 +48,12 @@ sys.argv = [sys.argv[0]] + hydra_args
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
+print('Simulation app launched successfully.')
+
+
+print("Using RSL-RL version check...")
+
+
 """Check for minimum supported RSL-RL version."""
 
 import importlib.metadata as metadata
