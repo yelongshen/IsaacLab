@@ -184,6 +184,30 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # wrap around environment for rsl-rl
     env = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
 
+    try:
+        print("vec_env.num_envs:", getattr(env, 'num_envs', None))
+        print("vec_env.observation_space:", getattr(env, 'observation_space', None))
+        print("vec_env.action_space:", getattr(env, 'action_space', None))
+        obs_space = getattr(env, 'observation_space', None)
+        act_space = getattr(env, 'action_space', None)
+        if hasattr(obs_space, 'shape'):
+            print("vec_env.observation_space.shape:", obs_space.shape)
+        elif hasattr(obs_space, 'spaces'):
+            print("vec_env.observation_space is a Dict with keys:", list(obs_space.spaces.keys()))
+            for k, s in obs_space.spaces.items():
+                print(f" - {k}: shape={getattr(s, 'shape', None)}")
+        if hasattr(act_space, 'shape'):
+            print("vec_env.action_space.shape:", act_space.shape)
+        elif hasattr(act_space, 'n'):
+            print("vec_env.action_space.n:", act_space.n)
+    except Exception as _:
+        # best-effort printing; don't fail execution if introspection fails
+        pass
+
+    print("action_space sample:", env.action_space.sample())
+    print("action_space shape:", getattr(env.action_space, "shape", None))
+    
+
     # create runner from rsl-rl
     if agent_cfg.class_name == "OnPolicyRunner":
         runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
