@@ -217,7 +217,15 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     except Exception as _:
         # best-effort printing; don't fail execution if introspection fails
         pass
-
+    
+    obs = env.get_observations()
+    if isinstance(obs, dict):
+        for k, v in obs.items():
+            try:
+                print(k, v.shape)
+            except Exception:
+                pass
+            
     print("action_space sample:", env.action_space.sample())
     print("action_space shape:", getattr(env.action_space, "shape", None))
     
