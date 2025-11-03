@@ -6,6 +6,7 @@
 import os
 from dataclasses import MISSING
 
+import isaaclab.sim as sim_utils
 from isaaclab.assets import AssetBaseCfg, RigidObjectCfg
 from isaaclab.devices.device_base import DevicesCfg
 from isaaclab.devices.keyboard import Se3KeyboardCfg
@@ -17,7 +18,7 @@ from isaaclab.managers import ObservationGroupCfg as ObsGroup
 from isaaclab.managers import ObservationTermCfg as ObsTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
-from isaaclab.sensors import ContactSensorCfg, FrameTransformerCfg
+from isaaclab.sensors import CameraCfg, ContactSensorCfg, FrameTransformerCfg
 from isaaclab.sensors.frame_transformer.frame_transformer_cfg import OffsetCfg
 from isaaclab.sim.schemas.schemas_cfg import MassPropertiesCfg, RigidBodyPropertiesCfg
 from isaaclab.sim.spawners.from_files.from_files_cfg import UsdFileCfg
@@ -132,9 +133,23 @@ class ObservationsCfg:
             self.enable_corruption = False
             self.concatenate_terms = False
 
+    @configclass
+    class SensesCfg(ObsGroup):
+        """Observations for image-based sensing."""
+
+        image = ObsTerm(
+            func=mdp.image,
+            params={"sensor_cfg": SceneEntityCfg("overhead_cam"), "data_type": "rgb", "normalize": True},
+        )
+
+        def __post_init__(self):
+            self.enable_corruption = False
+            self.concatenate_terms = False
+
     # observation groups
     policy: PolicyCfg = PolicyCfg()
     subtask_terms: SubtaskCfg = SubtaskCfg()
+    senses: SensesCfg = SensesCfg()
 
 
 @configclass
@@ -291,6 +306,25 @@ class RmpFlowAgibotPlaceToy2BoxEnvCfg(PlaceToy2BoxEnvCfg):
             spawn=UsdFileCfg(
                 usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Objects/Box/box.usd",
                 rigid_props=box_properties,
+            ),
+        )
+
+        self.scene.overhead_cam = CameraCfg(
+            prim_path="{ENV_REGEX_NS}/OverheadCamera",
+            update_period=0.05,
+            height=480,
+            width=640,
+            data_types=["rgb"],
+            spawn=sim_utils.PinholeCameraCfg(
+                focal_length=24.0,
+                focus_distance=400.0,
+                horizontal_aperture=20.955,
+                clipping_range=(0.1, 20.0),
+            ),
+            offset=CameraCfg.OffsetCfg(
+                pos=(0.9, 0.0, 0.75),
+                rot=(-0.1393, 0.2025, 0.8185, -0.5192),
+                convention="ros",
             ),
         )
 
